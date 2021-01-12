@@ -165,14 +165,6 @@ ax[1, 0].plot(time, adj_close)
 ax[1, 0].set_ylabel('Stock Price, $')
 ax[1, 0].set_xlabel('Trading Days')
 
-So = adj_close[460]
-mu = 0.15
-sigma = 0.4
-seed = 22
-N = 99
-W = Brownian(seed, N)[0]
-T = 1.
-
 # GBM Exact Solution
 # Parameters
 #
@@ -183,9 +175,15 @@ T = 1.
 # T:      time period
 # N:      number of increments
 
+So = adj_close[460]
+mu = 0.15
+sigma = 0.4
+seed = 22
+N = 99
+W = Brownian(seed, N)[0]
+T = 100
 soln = GBM(So, mu, sigma, W, T, N)[0]    # Exact solution
 t = GBM(So, mu, sigma, W, T, N)[1]       # time increments for  plotting
-
 ax[1, 1].plot(t, soln, label="GBM mu "+str(mu)+" sigma "+str(sigma)+" and seed "+str(seed))
 ax[1, 1].set_ylabel('Stock Price, $')
 
@@ -193,30 +191,58 @@ mu = 0.15
 sigma = 0.4
 seed = 5
 W = Brownian(seed, N)[0]
-T = 1.
-
 soln1 = GBM(So, mu, sigma, W, T, N)[0]    # Exact solution
 t = GBM(So, mu, sigma, W, T, N)[1]       # time increments for  plotting
+ax[1, 1].plot(t, soln1, label="GBM mu "+str(mu)+" sigma "+str(sigma)+" and seed "+str(seed))
 
 returns = daily_return(adj_close, 0, 460)
-
-mu = np.mean(returns)*252.           # drift coefficient
-sig = np.std(returns)*np.sqrt(252.)  # diffusion coefficient
+mu = np.mean(returns)*460.           # drift coefficient
+sig = np.std(returns)*np.sqrt(460.)  # diffusion coefficient
 print(mu, sig)
-
 seed = 5
 W = Brownian(seed, N)[0]
-T = 1.
-
-soln = GBM(So, mu, sigma, W, T, N)[0]    # Exact solution
+soln2 = GBM(So, mu, sigma, W, T, N)[0]    # Exact solution
 t = GBM(So, mu, sigma, W, T, N)[1]       # time increments for  plotting
-
-ax[1, 1].plot(t, soln, label="GBM with Seed: %s"%seed)
-ax[1, 1].plot(t, soln1, label="GBM,adjusted with Seed: %s"%seed)
+ax[1, 1].plot(t, soln2, label="GBM,adjusted mu "+str(round(mu, 2))+" sigma "+str(sigma)+" and seed "+str(seed))
 ax[1, 1].plot(t, adj_close[460:len(adj_close)], label="Actual Stock")
 ax[1, 1].set_xlabel('Time')
 ax[1, 1].set_ylabel('Stock Prediction, $')
-ax[1, 1].legend(loc="lower right")
+ax[1, 1].legend(loc="upper left")
+
+ax[1, 0].plot(time, adj_close)
+ax[1, 0].plot(time[460:len(adj_close)], soln2, label="GBM,adjusted mu "+str(round(mu, 2))+" sigma "+str(sigma)+" and seed "+str(seed))
+
+mu = 0.15
+sigma = 0.4
+seed = 5
+ax[1, 0].plot(time[460:len(adj_close)], soln1, label="GBM mu "+str(mu)+" sigma "+str(sigma)+" and seed "+str(seed))
+
+mu = 0.15
+sigma = 0.4
+seed = 22
+ax[1, 0].plot(time[460:len(adj_close)], soln, label="GBM mu "+str(mu)+" sigma "+str(sigma)+" and seed "+str(seed))
+ax[1, 0].set_ylabel('Stock Price, $')
+ax[1, 0].set_xlabel('Trading Days')
+ax[1, 0].legend(loc="upper left")
+
+plt.show()
+
+
+import sdepy
+from sdepy import wiener_source, kfunc
+dw = kfunc(wiener_source)
+my_instance = dw(paths=100, dtype=np.float32)
+x = my_instance(t=0, dt=1)
+
+def my_process(t, x, theta=1., k=1., sigma=1.):
+    return {'dt': k*(theta - x), 'dw': sigma}
+
+#myp = kfunc(my_process)
+coarse_timeline = (0., 0.25, 0.5, 0.75, 1.0)
+timeline = np.linspace(0., 1., 500)
+x = my_instance(x0=1, paths=100*1000, steps=100)(coarse_timeline)
+
+gr = plt.plot(timeline, x[:, :30])
 
 plt.show()
 
