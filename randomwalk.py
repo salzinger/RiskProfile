@@ -116,3 +116,4 @@ ax6.legend(loc="upper left", fontsize=6)
 plt.tight_layout()
 plt.show()
 fig.savefig("bonus_exercise.png", dpi=400)
+#
